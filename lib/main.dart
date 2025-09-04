@@ -1,5 +1,6 @@
 import 'package:booking_stadium/providers/user_provider.dart';
 import 'package:booking_stadium/screens/profile_screen.dart';
+import 'package:booking_stadium/screens/splash_screen.dart';
 import 'package:booking_stadium/widgets/new_booking_sheet.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -81,6 +82,7 @@ class MyAppState extends State<MyApp> {
       ],
       home: const LoginScreen(),
       routes: {
+        '/': (context) => const SplashScreen(),
         '/main': (context) => OnboardingScreen(setLocale: setLocale),
         '/auth': (context) => const LoginScreen(),
       },
