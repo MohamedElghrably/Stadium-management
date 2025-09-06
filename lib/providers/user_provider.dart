@@ -9,4 +9,12 @@ class UserProvider with ChangeNotifier {
     print(" [debug] user provider = ${currentUser?.phone}");
     notifyListeners();
   }
+
+  void udateUserType(String userType) {
+    if (currentUser != null) {
+      currentUser = currentUser!.copyWith(userType: userType);
+      notifyListeners();
+      print(" [debug] user type updated to $userType");
+    }
+  }
 }

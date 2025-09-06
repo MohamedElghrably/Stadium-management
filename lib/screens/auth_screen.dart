@@ -1,9 +1,8 @@
 import 'package:booking_stadium/auth/register_service.dart';
-import 'package:booking_stadium/firebase/firebase_service.dart';
 import 'package:booking_stadium/main.dart';
 import 'package:booking_stadium/models/user.dart';
 import 'package:booking_stadium/providers/user_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:booking_stadium/screens/confimation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   String _username = '';
   String _password = '';
   String _phone = '';
+
   bool _isLoading = false;
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -324,14 +324,21 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _formKey = GlobalKey<FormState>();
   String _username = '';
   String _phone = '';
+  String _stadiumName = '';
+  List<String> userList = ['صاحب ملعب', 'مشرف'];
+  String dropDownValue = 'صاحب ملعب';
+  String? selectedStadium;
 
   bool _isLoading = false;
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _stadiumNameController = TextEditingController();
+  List<String> stadiumNames = [];
 
   @override
   void initState() {
+    _loadStadiumNames();
     super.initState();
     _controller = AnimationController(
       vsync: this,
@@ -344,10 +351,23 @@ class _RegisterScreenState extends State<RegisterScreen>
     _controller.forward();
   }
 
+  Future<void> _loadStadiumNames() async {
+    try {
+      final fetched = await RegisterService.loadStadiumNames();
+      setState(() {
+        stadiumNames.clear();
+        stadiumNames.addAll(fetched);
+      });
+    } catch (e) {
+      print("Error loading stadium names: $e");
+    }
+  }
+
   @override
   void dispose() {
     _controller.dispose();
     _phoneController.dispose();
+    _stadiumNameController.dispose();
     super.dispose();
   }
 
@@ -355,14 +375,18 @@ class _RegisterScreenState extends State<RegisterScreen>
     UserModel? cuurentUser;
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+
     setState(() => _isLoading = true);
+
     String phone = _phoneController.text.trim();
     if (phone.startsWith('0')) {
       phone = phone.substring(1);
     }
     String fullPhoneNumber = '+20$phone';
     bool codeSent = await RegisterService.sendOTP(fullPhoneNumber);
+
     setState(() => _isLoading = false);
+
     if (codeSent) {
       String? otp = await showDialog<String>(
         context: context,
@@ -409,21 +433,29 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   code,
                                 );
                                 setState(() => isVerifying = false);
+
                                 if (verified) {
-                                  print(" [debug] verified");
+                                  // Save user
                                   RegisterService.addingNewUser(
                                     _username,
                                     _phone,
+                                    dropDownValue,
+                                    _stadiumName,
                                   );
+
                                   cuurentUser =
                                       await RegisterService.getCurrentUserModel();
-                                  print(
-                                    "current user auth_screen $cuurentUser",
-                                  );
+
+                                  // ✅ Update provider with user + type
                                   Provider.of<UserProvider>(
                                     context,
                                     listen: false,
                                   ).updateUser(cuurentUser);
+                                  Provider.of<UserProvider>(
+                                    context,
+                                    listen: false,
+                                  ).udateUserType(dropDownValue);
+
                                   Navigator.of(context).pop(code);
                                   Navigator.of(context).push(
                                     PageRouteBuilder(
@@ -437,7 +469,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                             secondaryAnimation,
                                           ) => FadeTransition(
                                             opacity: animation,
-                                            child: const OnboardingScreen(),
+                                            child: const ConfimationScreen(),
                                           ),
                                     ),
                                   );
@@ -454,12 +486,11 @@ class _RegisterScreenState extends State<RegisterScreen>
           );
         },
       );
+
       if (otp != null) {
-        // Registration complete, navigate to main app or show success
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('تم التحقق بنجاح!')));
-        // TODO: Save user info to Firestore if needed
       }
     } else {
       ScaffoldMessenger.of(
@@ -529,6 +560,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                         ),
                       ),
                       const SizedBox(height: 28),
+
+                      // Username
                       TextFormField(
                         key: const ValueKey('username'),
                         decoration: InputDecoration(
@@ -547,6 +580,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                         onSaved: (value) => _username = value ?? '',
                       ),
                       const SizedBox(height: 16),
+
+                      // Phone
                       TextFormField(
                         key: const ValueKey('phone'),
                         controller: _phoneController,
@@ -571,8 +606,88 @@ class _RegisterScreenState extends State<RegisterScreen>
                       ),
                       const SizedBox(height: 16),
 
-                      // const SizedBox(height: 16),
+                      // Dropdown
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.supervised_user_circle_outlined,
+                          ),
+                        ),
+                        value: dropDownValue,
+                        items:
+                            userList
+                                .map(
+                                  (e) => DropdownMenuItem(
+                                    value: e,
+                                    child: Text(e),
+                                  ),
+                                )
+                                .toList(),
+                        onChanged: (selectedUser) {
+                          setState(() {
+                            dropDownValue = selectedUser!;
+                          });
+                        },
+                      ),
+
+                      // Stadium Name field (only if صاحب ملعب)
+                      if (dropDownValue == 'صاحب ملعب') ...[
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          key: const ValueKey('stadium_name'),
+                          controller: _stadiumNameController,
+                          decoration: InputDecoration(
+                            labelText: 'اسم الملعب',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            prefixIcon: const Icon(Icons.stadium_outlined),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'أدخل اسم الملعب';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) => _stadiumName = value ?? '',
+                        ),
+                      ] else if (dropDownValue == 'مشرف') ...[
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: 'اختر الملعب',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.supervised_user_circle_outlined,
+                            ),
+                          ),
+                          value: selectedStadium,
+                          items:
+                              stadiumNames
+                                  .map(
+                                    (e) => DropdownMenuItem(
+                                      value: e,
+                                      child: Text(e),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (stadium) {
+                            setState(() {
+                              // here we can update the scelected stadium
+                              // dropDownValue = selectedUser!;
+                            });
+                          },
+                        ),
+                      ],
+
                       const SizedBox(height: 28),
+
+                      // Submit button
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 400),
                         child:
@@ -605,6 +720,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 ),
                       ),
                       const SizedBox(height: 16),
+
+                      // Go to login
                       TextButton(
                         onPressed: _goToLogin,
                         child: const Text(

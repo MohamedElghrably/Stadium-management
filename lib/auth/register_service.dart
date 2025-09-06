@@ -53,12 +53,19 @@ class RegisterService {
     }
   }
 
-  static Future<void> addingNewUser(String username, String phone) async {
+  static Future<void> addingNewUser(
+    String username,
+    String phone,
+    String userType,
+    String stadiumName,
+  ) async {
     User? currentUser = getCurrentUser();
     UserModel user = UserModel(
       id: currentUser!.uid,
       username: username,
       phone: phone,
+      userType: userType,
+      stadiumName: stadiumName,
     );
     try {
       await FirebaseService.addUsertoFirestore(user);
@@ -84,5 +91,11 @@ class RegisterService {
     userModel = await FirebaseService.getUserByUid(user.uid);
     print(" [debug] userModel register_service = $userModel");
     return userModel;
+  }
+
+  List<String> stadiumNames = [];
+
+  static Future<List<String>> loadStadiumNames() async {
+    return await FirebaseService.getAllStadiumNamesFromFirebase();
   }
 }

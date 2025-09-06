@@ -88,4 +88,13 @@ class FirebaseService {
     }
     return snapshot.data();
   }
+
+  static Future<List<String>> getAllStadiumNamesFromFirebase() async {
+    final snapshot = await userCollection().get();
+
+    return snapshot.docs
+        .map((doc) => doc.data().stadiumName) // already typed
+        .where((name) => name.isNotEmpty)
+        .toList();
+  }
 }
