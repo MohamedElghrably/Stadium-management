@@ -58,6 +58,7 @@ class RegisterService {
     String phone,
     String userType,
     String stadiumName,
+    String status,
   ) async {
     User? currentUser = getCurrentUser();
     UserModel user = UserModel(
@@ -66,6 +67,7 @@ class RegisterService {
       phone: phone,
       userType: userType,
       stadiumName: stadiumName,
+      status: status,
     );
     try {
       await FirebaseService.addUsertoFirestore(user);

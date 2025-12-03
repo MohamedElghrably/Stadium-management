@@ -1,5 +1,8 @@
+import 'package:booking_stadium/models/notification.dart';
 import 'package:booking_stadium/providers/user_provider.dart';
+import 'package:booking_stadium/screens/notification_screen.dart';
 import 'package:booking_stadium/screens/profile_screen.dart';
+import 'package:booking_stadium/screens/notification_screen.dart';
 import 'package:booking_stadium/widgets/new_booking_sheet.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +16,7 @@ import 'screens/revenues_screen.dart';
 import 'services/notification_helper.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/auth_screen.dart';
+import 'package:badges/badges.dart' as badges;
 
 TextDirection getRtlTextDirection() {
   return TextDirection.values.length > 1
@@ -556,12 +560,38 @@ class MainNavShell extends StatefulWidget {
 
 class _MainNavShellState extends State<MainNavShell> {
   int _selectedIndex = 0;
+  int _notificationCount = 3;
   DateTime _selectedDay = DateTime.now();
 
   final List<Widget> _screens = [
     DashboardScreen(),
     BookingsScreen(),
     RevenuesScreen(), // <-- new tab
+    NotificationsScreen(
+      notifications: [
+        // Example notification
+        NotificationModel(
+          title: "طلب إشراف",
+          body: "أحمد يريد الإنضمام إلى ملعب الأهلي",
+          timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
+        ),
+        NotificationModel(
+          title: "حجز جديد",
+          body: "تم حجز ملعب 2 في 15 سبتمبر 2023 الساعة 5 مساءً",
+          timestamp: DateTime.now().subtract(const Duration(hours: 1)),
+        ),
+        NotificationModel(
+          title: "تذكير بالحجز",
+          body: "لديك حجز قادم في ملعب 1 غدًا الساعة 3 مساءً",
+          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        ),
+        NotificationModel(
+          title: "تحديث النظام",
+          body: "تم تحديث التطبيق إلى الإصدار 2.0. تحقق من الميزات الجديدة!",
+          timestamp: DateTime.now().subtract(const Duration(days: 1)),
+        ),
+      ],
+    ), // Pass an empty list or populate it with NotificationModel instances
     ProfileScreen(),
   ];
 
@@ -598,6 +628,18 @@ class _MainNavShellState extends State<MainNavShell> {
               label: 'الايرادات',
             ),
             BottomNavigationBarItem(
+              icon: badges.Badge(
+                showBadge: _notificationCount > 0,
+                badgeContent: Text(
+                  _notificationCount.toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+
+                child: const Icon(Icons.notification_important_outlined),
+              ),
+              label: 'الإشعارات',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.person),
               label: 'الإعدادات',
             ),
@@ -615,7 +657,7 @@ class _MainNavShellState extends State<MainNavShell> {
         child: Icon(Icons.add, size: 32),
         shape: CircleBorder(side: BorderSide(width: 4, color: Colors.teal)),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

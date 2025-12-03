@@ -441,6 +441,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                     _phone,
                                     dropDownValue,
                                     _stadiumName,
+                                    'pending approval',
                                   );
 
                                   cuurentUser =
