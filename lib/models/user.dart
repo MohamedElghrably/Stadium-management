@@ -4,6 +4,7 @@ class UserModel {
   final String phone;
   final String userType;
   final String stadiumName;
+  final String status;
 
   UserModel({
     required this.id,
@@ -11,6 +12,7 @@ class UserModel {
     required this.phone,
     required this.userType,
     required this.stadiumName,
+    required this.status,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class UserModel {
       phone: json['phone'] ?? '',
       userType: json['userType'] ?? '',
       stadiumName: json['stadiumName'] ?? '',
+      status: json['status'] ?? '',
     );
   }
 
@@ -30,6 +33,7 @@ class UserModel {
       'phone': phone,
       'userType': userType,
       'stadiumName': stadiumName,
+      'status': status,
     };
   }
 
@@ -39,6 +43,7 @@ class UserModel {
     String? phone,
     String? userType,
     String? stadiumName,
+    String? status,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class UserModel {
       phone: phone ?? this.phone,
       userType: userType ?? this.userType,
       stadiumName: stadiumName ?? this.stadiumName,
+      status: status ?? this.status,
     );
   }
 }
